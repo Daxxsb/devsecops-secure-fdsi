@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sistema Unsecure</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .badge-unsecure {
+            background: #dc3545;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            letter-spacing: 1px;
+        }
+
+        .user-info {
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+        }
+
+        .user-info strong {
+            color: #fff;
+        }
+
+        .btn-logout {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.7);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            text-decoration: none;
+            margin-left: 16px;
+        }
+
+        .content {
+            padding: 40px 32px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .alert-success {
+            background: rgba(25, 135, 84, 0.15);
+            border: 1px solid rgba(25, 135, 84, 0.4);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 32px;
+            color: #75c798;
+        }
+
+        .alert-success h2 {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+
+        .vuln-warning {
+            background: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 32px;
+            font-size: 13px;
+            color: rgba(255, 107, 120, 0.9);
+            line-height: 1.6;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th {
+            background: rgba(255,255,255,0.06);
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.5);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            font-size: 14px;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .hash-cell {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #ffc107;
+        }
+
+        .role-badge {
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            color: #a5b4fc;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <span class="badge-unsecure">⚠ ARQUITECTURA UNSECURE</span>
+        <div style="display:flex;align-items:center">
+            <span class="user-info">Sesión: <strong th:text="${username}">usuario</strong>
+                (<span th:text="${role}">rol</span>)
+            </span>
+            <a href="/logout" class="btn-logout">Cerrar sesión</a>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="alert-success">
+            <h2>✓ Autenticación exitosa</h2>
+            <p>Bienvenido, <strong th:text="${username}">usuario</strong>. Has ingresado al sistema.</p>
+        </div>
+
+        <!--
+            VULNERABILIDAD: Exposicion de datos sensibles
+            Todos los usuarios autenticados (sin importar su rol) pueden ver
+            la lista completa de usuarios con sus hashes MD5.
+            Esto viola el principio de minimo privilegio.
+            OWASP Top 10 - A01:2021 Broken Access Control
+        -->
+        <div class="vuln-warning">
+            <strong>⚠ VULNERABILIDAD EXPUESTA:</strong> Esta tabla muestra todos los usuarios
+            del sistema con sus hashes MD5. Cualquier usuario autenticado puede verla,
+            sin importar su rol. Los hashes MD5 son crackeables en segundos usando
+            herramientas como <strong>crackstation.net</strong> o <strong>hashcat</strong>.
+        </div>
+
+        <p class="section-title">Usuarios registrados en el sistema</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Usuario</th>
+                    <th>Hash MD5 (contraseña)</th>
+                    <th>Rol</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="user : ${users}">
+                    <td th:text="${user.id}">1</td>
+                    <td th:text="${user.username}">admin</td>
+                    <td class="hash-cell" th:text="${user.password}">hash</td>
+                    <td><span class="role-badge" th:text="${user.role}">ADMIN</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
