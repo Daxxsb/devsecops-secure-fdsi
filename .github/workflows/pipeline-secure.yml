@@ -5,6 +5,40 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      demo_continue_after_secret_scan:
+        description: "Demo only: continue even if secret scan fails"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      demo_continue_after_sast:
+        description: "Demo only: continue even if SpotBugs fails"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      demo_continue_after_sca:
+        description: "Demo only: continue even if dependency-check fails"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      demo_continue_after_trivy:
+        description: "Demo only: continue even if Trivy fails"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 permissions:
   contents: read
@@ -22,10 +56,16 @@ jobs:
           fetch-depth: 0
 
       - name: Scan for leaked secrets
+        id: secret_scan
+        continue-on-error: ${{ github.event_name == 'workflow_dispatch' && inputs.demo_continue_after_secret_scan == 'true' }}
         uses: trufflesecurity/trufflehog@v3.90.5
         with:
           path: ./
           extra_args: --results=verified,unknown
+
+      - name: Enforce secret scan gate
+        if: ${{ steps.secret_scan.outcome == 'failure' && !(github.event_name == 'workflow_dispatch' && inputs.demo_continue_after_secret_scan == 'true') }}
+        run: exit 1
 
   build-sast-sca:
     name: Build + SAST + SCA
@@ -48,10 +88,22 @@ jobs:
         run: mvn -B clean verify
 
       - name: SAST - SpotBugs gate
+        id: sast_gate
+        continue-on-error: ${{ github.event_name == 'workflow_dispatch' && inputs.demo_continue_after_sast == 'true' }}
         run: mvn -B spotbugs:check
 
+      - name: Enforce SAST gate
+        if: ${{ steps.sast_gate.outcome == 'failure' && !(github.event_name == 'workflow_dispatch' && inputs.demo_continue_after_sast == 'true') }}
+        run: exit 1
+
       - name: SCA - OWASP Dependency-Check gate
+        id: sca_gate
+        continue-on-error: ${{ github.event_name == 'workflow_dispatch' && inputs.demo_continue_after_sca == 'true' }}
         run: mvn -B org.owasp:dependency-check-maven:check
+
+      - name: Enforce SCA gate
+        if: ${{ steps.sca_gate.outcome == 'failure' && !(github.event_name == 'workflow_dispatch' && inputs.demo_continue_after_sca == 'true') }}
+        run: exit 1
 
       - name: Generate SBOM (CycloneDX)
         run: mvn -B org.cyclonedx:cyclonedx-maven-plugin:makeBom
@@ -94,6 +146,8 @@ jobs:
         run: docker build -t secure-login:${{ github.sha }} .
 
       - name: Scan Docker image with Trivy
+        id: trivy_gate
+        continue-on-error: ${{ github.event_name == 'workflow_dispatch' && inputs.demo_continue_after_trivy == 'true' }}
         uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: secure-login:${{ github.sha }}
@@ -101,6 +155,10 @@ jobs:
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: '1'
+
+      - name: Enforce Trivy gate
+        if: ${{ steps.trivy_gate.outcome == 'failure' && !(github.event_name == 'workflow_dispatch' && inputs.demo_continue_after_trivy == 'true') }}
+        run: exit 1
 
   deploy-staging:
     name: Deploy to Staging
