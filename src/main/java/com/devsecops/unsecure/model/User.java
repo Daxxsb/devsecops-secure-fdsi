@@ -2,16 +2,13 @@ package com.devsecops.unsecure.model;
 
 /**
  * Modelo de usuario.
- * VULNERABILIDAD: La contraseña se almacena como MD5 en la BD.
- * MD5 es un algoritmo roto - reversible con tablas rainbow.
- * OWASP Top 10 - A02:2021 Cryptographic Failures
- * Lo correcto sería usar BCrypt con salt.
+ * Las contraseñas se almacenan como hash BCrypt en la BD.
  */
 public class User {
 
     private Long id;
     private String username;
-    // VULNERABILIDAD: campo password almacenado como hash MD5 debil
+    // Hash BCrypt para autenticacion.
     private String password;
     private String role;
 

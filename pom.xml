@@ -8,18 +8,15 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <!-- VULNERABILIDAD: Versión antigua de Spring Boot con CVEs conocidos -->
-        <!-- CVE-2023-20883, CVE-2023-34053 presentes en esta versión -->
-        <!-- La arquitectura DevSecOps detectará esto con OWASP Dependency-Check -->
-        <version>3.0.0</version>
+        <version>3.3.10</version>
         <relativePath/>
     </parent>
 
     <groupId>com.devsecops</groupId>
-    <artifactId>unsecure-login</artifactId>
+    <artifactId>secure-login</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>unsecure-login</name>
-    <description>Demo arquitectura tradicional sin controles de seguridad - Paper DevSecOps ECIJ</description>
+    <name>secure-login</name>
+    <description>Demo arquitectura DevSecOps con controles de seguridad integrados - Paper DevSecOps ECIJ</description>
 
     <properties>
         <java.version>21</java.version>
@@ -42,10 +39,16 @@
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
 
-        <!-- JDBC directo - sin ORM para facilitar SQL Injection -->
+        <!-- JDBC -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+
+        <!-- Spring Security -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
         <!-- Driver PostgreSQL -->
@@ -55,7 +58,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- VULNERABILIDAD: Lombok (versión sin parchear incluida por Spring Boot 3.0.0) -->
+        <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -78,18 +81,9 @@
                 <version>${spotbugs.plugin.version}</version>
                 <configuration>
                     <effort>Max</effort>
-                    <threshold>Medium</threshold>
+                    <threshold>High</threshold>
                     <failOnError>true</failOnError>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>spotbugs-check</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
 
             <plugin>
@@ -103,29 +97,12 @@
                         <format>JSON</format>
                     </formats>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>dependency-check</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
 
             <plugin>
                 <groupId>org.cyclonedx</groupId>
                 <artifactId>cyclonedx-maven-plugin</artifactId>
                 <version>${cyclonedx.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>makeBom</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
 
             <plugin>

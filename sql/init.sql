@@ -1,40 +1,33 @@
 -- =============================================================
--- Script de inicializacion de base de datos
--- Arquitectura Unsecure - Demo DevSecOps
+-- Script de inicializacion de base de datos segura
+-- Arquitectura DevSecOps - Demo ECIJ
 -- =============================================================
 
 -- Crear tabla de usuarios
 CREATE TABLE IF NOT EXISTS users (
     id       SERIAL PRIMARY KEY,
     username VARCHAR(50)  NOT NULL UNIQUE,
-    -- VULNERABILIDAD: contrasenas almacenadas como MD5 debil
-    -- MD5("admin123")   = 0192023a7bbd73250516f069df18b500
-    -- MD5("user123")    = 1e8c29a5d72cf2ca33c9c826cd36d0ea
-    -- MD5("password")   = 5f4dcc3b5aa765d61d8327deb882cf99
-    -- MD5("123456")     = e10adc3949ba59abbe56e057f20f883e
-    -- Todos estos hashes son conocidos en tablas rainbow publicas
-    password VARCHAR(32)  NOT NULL,
+    password VARCHAR(100) NOT NULL,
     role     VARCHAR(20)  NOT NULL DEFAULT 'USER'
 );
 
--- Insertar usuarios de prueba con contrasenas en MD5
--- VULNERABILIDAD: contrasenas debiles y predecibles
+-- Passwords protegidos con BCrypt (coste 12)
 INSERT INTO users (username, password, role) VALUES
     -- admin / admin123
-    ('admin',    '0192023a7bbd73250516f069df18b500', 'ADMIN'),
+    ('admin',    '$2b$12$SPTuPKxe.KQmaPe7flB1veAp2nGoduG9GsR7qO1Rx/7YOaCI/s4Ha', 'ADMIN'),
     -- alice / password
-    ('alice',    '5f4dcc3b5aa765d61d8327deb882cf99', 'USER'),
+    ('alice',    '$2b$12$LVE2zu7ayl/IKSuUUqKzGOzEvUPAIchRsvzQxpb5RpTxlvMI6IKAC', 'USER'),
     -- bob / 123456
-    ('bob',      'e10adc3949ba59abbe56e057f20f883e', 'USER'),
+    ('bob',      '$2b$12$bcJj/RyDE3cWIF/wNI3ryexQjfA3CkpI9a1RX9K5ANdmmH167Tvma', 'USER'),
     -- charlie / user123
-    ('charlie',  '1e8c29a5d72cf2ca33c9c826cd36d0ea', 'USER')
+    ('charlie',  '$2b$12$k4SXSC4hWinmM2NKh/amce7uTxvajLMx4wxnCJwzUzRBaL8cVnai2', 'USER')
 ON CONFLICT (username) DO NOTHING;
 
 -- Mensaje de confirmacion
 DO $$
 BEGIN
     RAISE NOTICE '================================================';
-    RAISE NOTICE 'BD inicializada con usuarios vulnerables (MD5)';
-    RAISE NOTICE 'admin:admin123 | alice:password | bob:123456';
+    RAISE NOTICE 'BD inicializada con usuarios seguros (BCrypt)';
+    RAISE NOTICE 'admin:admin123 | alice:password | bob:123456 | charlie:user123';
     RAISE NOTICE '================================================';
 END $$;

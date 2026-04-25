@@ -1,12 +1,6 @@
 # =============================================================
-# Docker Compose - Arquitectura Unsecure
+# Docker Compose - Arquitectura Secure
 # Levanta: PostgreSQL + Spring Boot app
-#
-# Uso:
-#   docker-compose up --build     <- primera vez
-#   docker-compose up -d          <- modo background
-#   docker-compose down           <- detener y limpiar
-#   docker-compose logs -f app    <- ver logs en tiempo real
 # =============================================================
 
 services:
@@ -14,13 +8,11 @@ services:
   # Base de datos PostgreSQL
   db:
     image: postgres:15
-    container_name: unsecure-db
+    container_name: secure-db
     environment:
-      # VULNERABILIDAD: Credenciales debiles en variables de entorno
-      # En produccion real estas deberian estar en Docker Secrets o Vault
-      POSTGRES_DB: unsecuredb
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: ${POSTGRES_DB:-unsecuredb}
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMe_UseEnv!}
     ports:
       - "5432:5432"
     volumes:
@@ -30,7 +22,7 @@ services:
     networks:
       - unsecure-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d unsecuredb"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-unsecuredb}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -38,15 +30,13 @@ services:
   # Aplicacion Spring Boot
   app:
     build: .
-    container_name: unsecure-app
+    container_name: secure-app
     ports:
       - "8080:8080"
     environment:
-      # Las mismas credenciales que en application.properties
-      # VULNERABILIDAD: duplicadas aqui y en el archivo de propiedades
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/unsecuredb
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: admin123
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-unsecuredb}
+      DB_USER: ${POSTGRES_USER:-admin}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMe_UseEnv!}
     depends_on:
       db:
         condition: service_healthy

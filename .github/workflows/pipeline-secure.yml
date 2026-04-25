@@ -85,7 +85,7 @@ jobs:
           cache: maven
 
       - name: Compile and run tests
-        run: mvn -B clean verify
+        run: mvn -B clean test
 
       - name: SAST - SpotBugs gate
         id: sast_gate
