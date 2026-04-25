@@ -41,8 +41,8 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Compile and run tests
-        run: mvn -B clean verify
+      - name: Compile and run tests (without security gates)
+        run: mvn -B clean test
 
       - name: SAST - SpotBugs gate (demo bypass)
         continue-on-error: true
